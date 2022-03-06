@@ -12,7 +12,7 @@ var connection = mysql.createConnection({
 
 app.listen(3000, () => {
     console.log("Server running on port 3000");
-    connection.connect();
+    //connection.connect();
 });
 
 app.get("/ping", (req, res) => {
@@ -22,7 +22,6 @@ app.get("/ping", (req, res) => {
 });
 
 app.get("/product/:id", (req, res) => {
-
     let queryString = "SELECT ID, Title, UPC, Price, Description, Brand, Category, MPN, SKU, Image FROM products WHERE Active is not null AND ID=?";
 
     connection.query(queryString, req.params.id, function(err, rows, _) {
@@ -47,8 +46,14 @@ app.get("/products", (req, res) => {
     let pageSize = parseInt(req.query.pageSize);
     if (pageSize === undefined || pageSize < 1 || isNaN(pageSize)) pageSize = 10
 
+    let searchString = req.query.searchString;
     let queryString = "SELECT ID, Title, UPC, Price, Description, Image FROM products WHERE Active is not NULL LIMIT ?, ?";
-    connection.query(queryString, [page, pageSize], function(err, rows, _) {
+    let parameters = [page, pageSize];
+    if (searchString !== undefined) {
+        queryString = "SELECT ID, Title, UPC, Price, Description, Image FROM products WHERE Active is not NULL AND CONCAT(Title, UPC, Description, SKU, MPN) REGEXP ? LIMIT ?, ?";
+        parameters = [searchString, page, pageSize];
+    }
+    connection.query(queryString, parameters, function(err, rows, _) {
         if (err) throw err
 
         if (rows.length > 0) {
