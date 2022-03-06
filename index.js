@@ -37,3 +37,28 @@ app.get("/product/:id", (req, res) => {
     });
     
 });
+
+app.get("/products", (req, res) => {
+    
+   let page = parseInt(req.query.page);
+   if(page === undefined || page < 0 || isNaN(page)) page = 0
+   
+   let pageSize = parseInt(req.query.pageSize);
+   if(pageSize === undefined || pageSize < 1 || isNaN(pageSize)) pageSize = 10
+   
+   let offset = page * pageSize;
+   
+   let queryString = "SELECT ID, Title, UPC, Price, Description, Image FROM products WHERE Active is not NULL LIMIT ?, ?";
+   connection.query(queryString, [page, pageSize], function(err, rows, _) {
+       if(err) throw err
+       
+       if(rows.length > 0)
+       {
+           res.json(rows);
+       }
+        else
+        {
+            res.json({}); 
+        }
+   });
+});
