@@ -51,7 +51,7 @@ app.get("/products", (req, res) => {
     let parameters = [page, pageSize];
     if (searchString !== undefined) {
         queryString = "SELECT ID, Title, UPC, Price, Description, Image FROM products WHERE Active is not NULL AND CONCAT(Title, UPC, Description, SKU, MPN) REGEXP ? LIMIT ?, ?";
-        parameters = [searchString, page, pageSize];
+        parameters.unshift(searchString.split(" ").join("|"));
     }
     connection.query(queryString, parameters, function(err, rows, _) {
         if (err) throw err
