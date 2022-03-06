@@ -1,0 +1,16 @@
+{
+  "name": "Product Catalog Backend - JS",
+  "version": "0.0.1",
+  "description": "A backend API Product Catalog written in JS.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^10.0.0",
+    "express": "^4.17.2",
+    "mysql": "^2.18.1"
+  }
+}
