@@ -1,7 +1,10 @@
 let express = require("express");
 let app = express();
+let session = require("express-session");
+let bcrypt = require("bcrypt");
 var mysql = require('mysql');
 let dotenv = require('dotenv').config();
+
 
 var connection = mysql.createConnection({
     host: process.env.host,
@@ -9,6 +12,13 @@ var connection = mysql.createConnection({
     password: process.env.password,
     database: process.env.database
 })
+
+app.use(session({
+    secret: process.env.secret,
+    resave: true,
+    saveUninitialized: true
+}));
+app.use(express.json());
 
 app.listen(3000, () => {
     console.log("Server running on port 3000");
@@ -37,7 +47,6 @@ app.get("/product/:id", (req, res) => {
     });
 
 });
-
 app.get("/products", (req, res) => {
 
     let page = parseInt(req.query.page);
@@ -64,4 +73,62 @@ app.get("/products", (req, res) => {
             });
         }
     });
+});
+//login with username and password in json
+//get user info form db, then use bcrypt to compare stored hash with entered password
+app.post("/login", (req, res) => {
+
+    let username = req.body.username;
+    let password = req.body.password;
+
+    connection.query("SELECT * FROM users WHERE email = ?", username, function(err, rows, _) {
+        if (err) throw err
+
+        if (rows.length === 1) {
+            //compare bcrypt from PHP generated hash
+            bcrypt.compare(password, rows[0]['PasswordHash'].replace("$2y$", "$2a$")).then(function(hashRes) {
+                if (hashRes) {
+                    req.session.loggedin = true;
+                    req.session.username = username;
+                    req.session.ID = rows[0]['ID'];
+                    res.json({
+                        "sucess": "true"
+                    });
+                } else //password does not match
+                {
+                    res.json({
+                        "sucess": "false"
+                    });
+                }
+            });
+
+        }
+    });
+});
+//get current acccount info
+app.get("/user", (req, res) => {
+    //return username and id if in valid session
+    if (req.session.loggedin) {
+        res.json({
+            "username": req.session.username,
+            "ID": req.session.ID
+        });
+    } else {
+        res.json({
+            "sucess": "false"
+        });
+    }
+});
+//logout of account
+app.get("/logout", (req, res) => {
+    //destroy session
+    if (req.session.loggedin) {
+        req.session.destroy();
+        res.json({
+            "sucess": "true"
+        });
+    } else
+        res.json({
+            "success": "false"
+        });
 });
