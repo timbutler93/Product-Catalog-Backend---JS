@@ -11,7 +11,7 @@ var connection = mysql.createConnection({
 exports.product = async (req, res) => {
     let queryString = "SELECT ID, Title, UPC, Price, Description, Brand, Category, MPN, SKU, Image FROM products WHERE Active is not null AND ID=?";
 
-    connection.query(queryString, req.params.id, function(err, rows, _) {
+    connection.query(queryString, req.params.id, (err, rows, _) => {
         if (err) throw err
 
         if (rows.length === 1) {
@@ -55,16 +55,18 @@ exports.login = async (req, res) => {
     let username = req.body.username;
     let password = req.body.password;
 
-    connection.query("SELECT * FROM users WHERE email = ?", username, function(err, rows, _) {
+    connection.query("SELECT * FROM users WHERE email = ?", username, (err, rows, _) => {
         if (err) throw err
 
         if (rows.length === 1) {
             //compare bcrypt from PHP generated hash
-            bcrypt.compare(password, rows[0]['PasswordHash'].replace("$2y$", "$2a$")).then(function(hashRes) {
+            bcrypt.compare(password, rows[0]['PasswordHash'].replace("$2y$", "$2a$")).then((hashRes) => {
                 if (hashRes) {
-                    req.session.loggedin = true;
+                    req.session.loggedIn = true;
                     req.session.username = username;
                     req.session.ID = rows[0]['ID'];
+                    req.session.Access = rows[0]['Access'];
+                    (req.session.Access > 10) ? req.session.isAdmin = true: req.session.isAdmin = false
                     res.json({
                         "sucess": "true"
                     });
@@ -82,7 +84,7 @@ exports.login = async (req, res) => {
 
 exports.user = async (req, res) => {
     //return username and id if in valid session
-    if (req.session.loggedin) {
+    if (req.session.loggedIn) {
         res.json({
             "username": req.session.username,
             "ID": req.session.ID
@@ -94,12 +96,40 @@ exports.user = async (req, res) => {
     }
 }
 
+exports.newUser = async (req, res) => {
+    if (req.session.loggedIn) {
+        res.json({
+            "success": "false"
+        });
+    } else {
+        let email = req.body.username;
+        let password = req.body.password;
+        connection.query("SELECT * FROM users WHERE email = ?", email, (err, rows, _) => {
+            if (rows.length > 0) {
+                res.json({
+                    "success": "false"
+                });
+            } else {
+                bcrypt.hash(password, 10, (errHash, hash) => {
+                    if (errHash) throw errHash;
+                    connection.query("INSERT INTO users (email, PasswordHash, Access) VALUES (?, ?, ?)", [email, hash, 0], (errInsert, result) => {
+                        if (errInsert) throw errInsert;
+                        res.json({
+                            "success": "true"
+                        });
+                    });
+                });
+            }
+        });
+    }
+}
+
 exports.logout = async (req, res) => {
     //destroy session
-    if (req.session.loggedin) {
+    if (req.session.loggedIn) {
         req.session.destroy();
         res.json({
-            "sucess": "true"
+            "success": "true"
         });
     } else
         res.json({
