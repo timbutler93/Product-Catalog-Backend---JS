@@ -32,3 +32,5 @@ app.post("/login", api.login);
 app.get("/user", api.user);
 //logout of account
 app.get("/logout", api.logout);
+//new user
+app.post("/user/new", api.newUser);
