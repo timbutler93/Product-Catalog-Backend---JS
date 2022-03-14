@@ -97,6 +97,7 @@ exports.user = async (req, res) => {
 }
 
 exports.newUser = async (req, res) => {
+    //if logged in, already have account
     if (req.session.loggedIn) {
         res.json({
             "success": "false"
@@ -104,12 +105,14 @@ exports.newUser = async (req, res) => {
     } else {
         let email = req.body.username;
         let password = req.body.password;
+        //check to see if no other user exist with that email
         connection.query("SELECT * FROM users WHERE email = ?", email, (err, rows, _) => {
             if (rows.length > 0) {
                 res.json({
                     "success": "false"
                 });
             } else {
+                //hash password and insert information into database
                 bcrypt.hash(password, 10, (errHash, hash) => {
                     if (errHash) throw errHash;
                     connection.query("INSERT INTO users (email, PasswordHash, Access) VALUES (?, ?, ?)", [email, hash, 0], (errInsert, result) => {
@@ -135,4 +138,40 @@ exports.logout = async (req, res) => {
         res.json({
             "success": "false"
         });
+}
+
+exports.changePassword = async (req, res) => {
+    if (req.session.loggedIn) {
+        let email = req.session.username;
+        let currentPassword = req.body.currentPassword;
+        let newPassword = req.body.newPassword;
+        //get current password hash
+        connection.query("SELECT * FROM users WHERE email = ?", email, (err, rows, _) => {
+            if (err) throw err;
+            //compare currentpassword hash with supplied current password
+            bcrypt.compare(currentPassword, rows[0]['PasswordHash'].replace("$2y$", "$2a$")).then((hashResult) => {
+                if (hashResult) {
+                    //generate new hash from new password
+                    bcrypt.hash(newPassword, 10, (errHash, newHash) => {
+                        //insert hash into database
+                        connection.query("UPDATE users SET PasswordHash = ? WHERE email = ?", [newHash, email], (errUpdate, result) => {
+                            if (errUpdate) throw errUpdate;
+                            res.json({
+                                "success": "true"
+                            });
+                        });
+                    });
+                } else {
+                    //hash compare failed, current password supplied is wrong!
+                    res.json({
+                        "success": "false"
+                    });
+                }
+            });
+        });
+    } else {
+        res.json({
+            "success": "false"
+        });
+    }
 }

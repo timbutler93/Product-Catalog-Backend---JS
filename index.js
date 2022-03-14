@@ -34,3 +34,5 @@ app.get("/user", api.user);
 app.get("/logout", api.logout);
 //new user
 app.post("/user/new", api.newUser);
+//change password
+app.put("/user/password", api.changePassword);
