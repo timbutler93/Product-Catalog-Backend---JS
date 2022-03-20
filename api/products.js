@@ -14,7 +14,7 @@ exports.product = async (req, res) => {
         if (err) throw err
 
         if (rows.length === 1) {
-            res.json(rows[0]);
+            res.status(200).json(rows[0]);
         } else {
             res.json({
                 "success": "false"
@@ -41,11 +41,31 @@ exports.search = async (req, res) => {
         if (err) throw err
 
         if (rows.length > 0) {
-            res.json(rows);
+            res.status(200).json(rows);
         } else {
             res.json({
                 "success": "false"
             });
         }
     });
+}
+
+exports.add = async (req, res) => {
+    let productName = req.body.name;
+    let UPC = req.body.UPC;
+    let price = req.body.price;
+    let cost = req.body.cost;
+    let description = req.body.description;
+
+    if (productName === undefined || UPC === undefined) {
+        res.json({
+            "success": "false"
+        });
+    } else {
+        connection.query("INSERT INTO products (Title, UPC, Price, Cost, Description) VALUES (?, ?, ?, ?, ?)", [productName, UPC, price, cost, description], (err, res) => {
+            if (err) throw err;
+            console.log(res);
+        });
+    }
+
 }

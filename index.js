@@ -37,3 +37,5 @@ app.get("/user/logout", users.logout);
 app.post("/user/new", users.newUser);
 //change password
 app.put("/user/password", users.changePassword);
+//add product
+app.post("/product/new", products.add);
