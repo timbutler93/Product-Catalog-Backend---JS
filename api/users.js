@@ -24,13 +24,19 @@ exports.login = async (req, res) => {
                     req.session.ID = rows[0]['ID'];
                     req.session.Access = rows[0]['Access'];
                     (req.session.Access > 10) ? req.session.isAdmin = true: req.session.isAdmin = false
-                    res.json({
-                        "sucess": "true"
+                    res.status(200).json({
+                        "data": {
+                            "id": req.session.ID,
+                            "username": req.session.username
+                        }
                     });
                 } else //password does not match
                 {
-                    res.json({
-                        "sucess": "false"
+                    res.status(401).json({
+                        "error": {
+                            "code": 401,
+                            "message": "Invalid credentials!"
+                        }
                     });
                 }
             });
@@ -42,13 +48,16 @@ exports.login = async (req, res) => {
 exports.info = async (req, res) => {
     //return username and id if in valid session
     if (req.session.loggedIn) {
-        res.json({
+        res.status(200).json({
             "username": req.session.username,
             "ID": req.session.ID
         });
     } else {
-        res.json({
-            "sucess": "false"
+        res.status(401).json({
+            "error": {
+                "code": 401,
+                "message": "Please log in!"
+            }
         });
     }
 }
@@ -56,8 +65,11 @@ exports.info = async (req, res) => {
 exports.newUser = async (req, res) => {
     //if logged in, already have account
     if (req.session.loggedIn) {
-        res.json({
-            "success": "false"
+        res.status(403).json({
+            "error": {
+                "code": 403,
+                "message": "You are logged in already!"
+            }
         });
     } else {
         let email = req.body.username;
@@ -65,8 +77,11 @@ exports.newUser = async (req, res) => {
         //check to see if no other user exist with that email
         connection.query("SELECT * FROM users WHERE email = ?", email, (err, rows, _) => {
             if (rows.length > 0) {
-                res.json({
-                    "success": "false"
+                res.status(409).json({
+                    "error": {
+                        "code": 409,
+                        "message": "An account with that email already exists!"
+                    }
                 });
             } else {
                 //hash password and insert information into database
@@ -74,8 +89,8 @@ exports.newUser = async (req, res) => {
                     if (errHash) throw errHash;
                     connection.query("INSERT INTO users (email, PasswordHash, Access) VALUES (?, ?, ?)", [email, hash, 0], (errInsert, result) => {
                         if (errInsert) throw errInsert;
-                        res.json({
-                            "success": "true"
+                        res.status(201).json({
+                            "data": {}
                         });
                     });
                 });
@@ -88,12 +103,15 @@ exports.logout = async (req, res) => {
     //destroy session
     if (req.session.loggedIn) {
         req.session.destroy();
-        res.json({
-            "success": "true"
+        res.status(200).json({
+            "data": {}
         });
     } else
-        res.json({
-            "success": "false"
+        res.status(401).json({
+            "error": {
+                "code": 401,
+                "message": "User is not signed in!"
+            }
         });
 }
 
@@ -113,22 +131,28 @@ exports.changePassword = async (req, res) => {
                         //insert hash into database
                         connection.query("UPDATE users SET PasswordHash = ? WHERE email = ?", [newHash, email], (errUpdate, result) => {
                             if (errUpdate) throw errUpdate;
-                            res.json({
-                                "success": "true"
+                            res.status(200).json({
+                                "data": {}
                             });
                         });
                     });
                 } else {
                     //hash compare failed, current password supplied is wrong!
-                    res.json({
-                        "success": "false"
+                    res.status(401).json({
+                        "error": {
+                            "code": 401,
+                            "message": "Current password is not correct! Please try again"
+                        }
                     });
                 }
             });
         });
     } else {
-        res.json({
-            "success": "false"
+        res.status(401).json({
+            "error": {
+                "code": 401,
+                "message": "User is not signed in!"
+            }
         });
     }
 }
