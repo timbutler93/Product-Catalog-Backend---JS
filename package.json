@@ -1,18 +1,27 @@
 {
-  "name": "Product Catalog Backend - JS",
-  "version": "0.0.1",
-  "description": "A backend API Product Catalog written in JS.",
+  "name": "product-catalog-backend---js",
+  "version": "1.0.0",
+  "description": "A simple backend product catalog API to browse and view products, written in JS. Currently incomplete. Uses mysql(or mariadb) to store and retrieve information.",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/timbutler93/Product-Catalog-Backend---JS.git"
+  },
+  "author": "tim butler",
   "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/timbutler93/Product-Catalog-Backend---JS/issues"
+  },
+  "homepage": "https://github.com/timbutler93/Product-Catalog-Backend---JS#readme",
   "dependencies": {
     "bcrypt": "^5.0.1",
-    "dotenv": "^10.0.0",
-    "express": "^4.17.2",
+    "dotenv": "^16.0.0",
+    "express": "^4.17.3",
     "express-session": "^1.17.2",
+    "multer": "^1.4.4",
     "mysql": "^2.18.1"
   }
 }

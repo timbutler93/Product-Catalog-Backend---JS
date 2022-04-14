@@ -4,6 +4,13 @@ let session = require("express-session");
 let dotenv = require('dotenv').config();
 let users = require('./api/users');
 let products = require('./api/products');
+const multer = require("multer");
+const fs = require("fs");
+
+const upload = multer({
+    dest: process.env.image_directory
+});
+
 
 app.use(session({
     secret: process.env.secret,
@@ -39,3 +46,5 @@ app.post("/user/new", users.newUser);
 app.put("/user/password", users.changePassword);
 //add product
 app.post("/product/new", products.add);
+//image upload
+app.post("/products/:id/image", upload.single("image"), products.image);

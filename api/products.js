@@ -1,5 +1,5 @@
 var mysql = require('mysql');
-
+let fs = require("fs");
 var connection = mysql.createConnection({
     host: process.env.host,
     user: process.env.user,
@@ -58,6 +58,7 @@ exports.add = async (req, res) => {
     let price = req.body.price;
     let cost = req.body.cost;
     let description = req.body.description;
+    console.log('test');
     if (productName === undefined || UPC === undefined) {
         res.status(400).json({
             "error": {
@@ -78,4 +79,47 @@ exports.add = async (req, res) => {
         });
     }
 
+}
+exports.image = async (req, res) => {
+    let id = req.params.id;
+    if(!req.session.isAdmin)
+    {
+	res.status(403).json({
+            "error": {
+                "code": 403,
+                "message": "User does not have access to this feature!"
+            }
+        });
+
+    }
+    else if (req.file.mimetype !== "image/jpeg" && req.file.mimetype !== "image/png") {
+        res.status(415).json({
+            "error": {
+                "code": 415,
+                "message": "Only JPG and PNG image files are supported!"
+            }
+        });
+
+    } else if (req.file.size > 10000000) {
+        res.status(415).json({
+            "error": {
+                "code": 415,
+                "message": "File size too large! Can only upload files less than 10MB"
+            }
+        });
+    } else {
+        let name = process.env.image_directory + req.file.filename + "." + req.file.mimetype.split("/")[1];
+        let pathToSave = process.cwd() + "/" + name;
+        fs.rename(req.file.path, pathToSave, err => {
+            if (err) throw err;
+            connection.query("UPDATE products SET Image = ? WHERE ID = ?", [name, id], (sqlError, result) => {
+                if (sqlError) throw sqlError;
+                res.status(200).json({
+                    "success": "true"
+                });
+            });
+
+        });
+
+    }
 }
